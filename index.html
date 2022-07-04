@@ -1,0 +1,186 @@
+﻿<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>TEXT LIST</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+	<style type="text/css">
+		
+		.css-div {
+			font-family: monospace;
+			font-size: 12px;
+			background-color: rgba(220, 220, 220, 0.5);
+			text-align: left;
+			padding: 10px;
+		}
+
+	</style>
+</head>
+<body>
+
+	<br>
+	<center>
+	<textarea style="font-family: monospace; font-size: 12px; width: 90%;" id="id_message"></textarea><br><button class="btn btn-secondary" onclick="AddMessage()">PUBLISH!</button><br><br>
+	<button class="btn btn-danger" onclick="Clean()">CLEAR!</button>
+	</center>
+
+	<div style="text-align: center;" id="id_main"></div>
+
+	<!--<br><center>
+		<div class="css-div">
+			asdwqi
+		</div>
+	</center>-->
+
+
+	<script type="text/javascript">
+		
+		const firebaseConfig = {
+		  apiKey: "AIzaSyCRj1A4xQp3XgdG2HDzIZsDuEk1bp_iphc",
+		  authDomain: "textlist-39001.firebaseapp.com",
+		  projectId: "textlist-39001",
+		  storageBucket: "textlist-39001.appspot.com",
+		  messagingSenderId: "88725306002",
+		  appId: "1:88725306002:web:0c806020adb88a42b4444b"
+		};
+
+		firebase.initializeApp(firebaseConfig);
+
+		/*firebase.database().ref('messages').set({
+		    name: "messages"
+		});
+		firebase.database().ref('config').set({
+		    msgid: 0
+		});*/
+
+		firebase.database().ref().once('value').then((snapshot) => {
+			const data = snapshot.val();
+			var mn = parseInt(data['config']['msgid']);
+			var h = "";
+			for (var i = 0; i < mn; i++) {
+				h = "<br><center><div class=\"css-div\">" + Fixed(Decode(data['messages']['message' + i]['value'])) + "</div></center>" + h;
+			}
+			document.getElementById("id_main").innerHTML = h;
+		});
+
+		/*firebase.database().ref("msg").on('value', (snapshot) => {
+			const data = snapshot.val();
+			console.log(data['message']);
+		});*/
+
+		firebase.database().ref("messages").on('child_added', (snapshot) => {
+			const data = snapshot.val();
+			var h = "<br><center><div class=\"css-div\">" + Fixed(Decode(data['value'])) + "</div></center>";
+			document.getElementById("id_main").innerHTML = h + document.getElementById("id_main").innerHTML;
+		});
+
+		firebase.database().ref("cls").on('child_changed', (snapshot) => {
+			document.getElementById("id_main").innerHTML = "";
+		});
+
+		/*
+			let ascii = 'a'.charCodeAt(0); // 97
+			let char = String.fromCharCode(ascii); // 'a'
+		*/
+
+		function Encrypt (_a) {
+			var a = "";
+			a += _a;
+			var b = "";
+			for (var i = 0; i < a.length; i++) {
+				b += "a";
+				b += a.charCodeAt(i);
+			}
+			return b;
+		}
+
+		function Decode (_a) {
+			var a = "";
+			a += _a;
+			a += "a";
+			var b = "";
+			var c = "";
+			for (var i = 1; i < a.length; i++) {
+				var d = "";
+				d += a[i];
+				if (d == "a") {
+					b += String.fromCharCode(parseInt(c));
+					c = "";
+				}else{
+					c += d;
+				}
+			}
+			return b;
+		}
+
+		function Fixed (_a) {
+			var a = "";
+			a += _a;
+			var b = "";
+			for (var i = 0; i < a.length; i++) {
+				var c = a[i];
+				var pre = "";
+				if (i > 0) {
+					pre = a[i - 1];
+				}
+				if (c.charCodeAt(0) == 10) {
+					b += "<br>";
+				}else if (c == "<") {
+					b += "&lt;";
+				}else if (c == ">") {
+					b += "&gt;";
+				}else if (c == "\t") {
+					b += "&nbsp; &nbsp; ";
+				}else if (pre == " " && c == " ") {
+					if (b[b.length - 1] == " ") b += "&nbsp;";
+					else b += " ";
+				}else if (c == " ") {
+					b += "&nbsp;";
+				}else {
+					b += c;
+				}
+			}
+			return b;
+		}
+
+		function AddMessage () {
+			var msg = Encrypt(document.getElementById("id_message").value);
+			firebase.database().ref('config').once('value').then((snapshot) => {
+				const data = snapshot.val();
+				var mid = parseInt(data['msgid']);
+				var tm = parseInt(mid) + 1;
+				firebase.database().ref('config').set({
+				    msgid: tm
+				});
+				firebase.database().ref('messages/message' + mid).set({
+				    value: msg
+				});
+				return;
+			});
+		}
+
+		function Clean () {
+			firebase.database().ref('cls').once('value').then((snapshot) => {
+				const data = snapshot.val();
+				var mid = parseInt(data['clear']);
+				var tm = parseInt(mid) + 1;
+				firebase.database().ref('cls').set({
+				    clear: tm
+				});
+				firebase.database().ref('messages').set({
+				    name: "messages"
+				});
+				firebase.database().ref('config').set({
+				    msgid: 0
+				});
+			});
+		}
+
+	</script>
+</body>
+</html>
